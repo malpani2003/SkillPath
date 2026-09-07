@@ -6,30 +6,24 @@
     "orientation": "portrait",
     "scheme": "skillpath",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.skillpath"
     },
-
     "web": {
       "output": "static"
     },
-
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+    "expo-video"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

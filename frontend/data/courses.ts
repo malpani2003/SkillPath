@@ -23,31 +23,173 @@ export const courses: Course[] = [
           {
             id: "what-is-sql",
             title: "What is SQL?",
-            type: "article",
+            description:
+              "Learn what SQL is and how it is used to communicate with relational databases.",
+
+            videoUrl: "",
+
+            learn: {
+              keyPoints: [
+                "SQL is used to communicate with relational databases.",
+                "SQL allows you to retrieve and manipulate data.",
+                "SQL queries operate on tables, rows, and columns.",
+              ],
+              exampleTitle: "Your first SQL query",
+              exampleCode: `SELECT *
+FROM users;`,
+            },
+
+            tryIt: {
+              instructions:
+                "Try writing a query that returns all rows from the users table.",
+              starterCode: `SELECT *
+FROM users;`,
+            },
+
+            exercise: {
+              question:
+                "Write a query that returns all columns from the users table.",
+              starterCode: "",
+            },
+
             completed: true,
           },
+
           {
             id: "databases-and-tables",
             title: "Databases & Tables",
-            type: "article",
+            description:
+              "Understand how databases organize information into tables, rows, and columns.",
+
+            videoUrl: "",
+
+            learn: {
+              keyPoints: [
+                "A database can contain multiple tables.",
+                "Tables organize data into rows and columns.",
+                "Each column represents a particular type of data.",
+              ],
+              exampleTitle: "Users table",
+              exampleCode: `SELECT *
+FROM users;`,
+            },
+
+            tryIt: {
+              instructions: "Try selecting all records from the users table.",
+              starterCode: `SELECT *
+FROM users;`,
+            },
+
+            exercise: {
+              question:
+                "Write a query that returns all records from the users table.",
+              starterCode: "",
+            },
+
             completed: true,
           },
+
           {
             id: "select-statement",
             title: "The SELECT Statement",
-            type: "interactive",
+            description:
+              "Learn how the SELECT statement is used to retrieve data from a database.",
+
+            videoUrl: "",
+
+            learn: {
+              keyPoints: [
+                "SELECT is used to retrieve data.",
+                "SELECT can return one or more columns.",
+                "SELECT * returns all columns.",
+              ],
+              exampleTitle: "Selecting data",
+              exampleCode: `SELECT name
+FROM users;`,
+            },
+
+            tryIt: {
+              instructions:
+                "Try selecting the name column from the users table.",
+              starterCode: `SELECT name
+FROM users;`,
+            },
+
+            exercise: {
+              question:
+                "Write a query that returns the name column from users.",
+              starterCode: "",
+            },
+
             completed: true,
           },
+
           {
             id: "selecting-columns",
             title: "Selecting Columns",
-            type: "interactive",
+            description:
+              "Learn how to select only the columns you need from a table.",
+
+            videoUrl: "",
+
+            learn: {
+              keyPoints: [
+                "You can select specific columns from a table.",
+                "Multiple columns can be selected in one query.",
+                "Selecting only required columns makes queries clearer.",
+              ],
+              exampleTitle: "Selecting multiple columns",
+              exampleCode: `SELECT name, age
+FROM users;`,
+            },
+
+            tryIt: {
+              instructions:
+                "Try selecting both name and age from the users table.",
+              starterCode: `SELECT name, age
+FROM users;`,
+            },
+
+            exercise: {
+              question: "Write a query that returns name and age from users.",
+              starterCode: "",
+            },
+
             completed: true,
           },
+
           {
             id: "first-sql-query",
             title: "Write Your First SQL Query",
-            type: "interactive",
+            description:
+              "Put everything together and write your first complete SQL query.",
+
+            videoUrl: "",
+
+            learn: {
+              keyPoints: [
+                "SQL queries follow a defined structure.",
+                "SELECT specifies the data you want.",
+                "FROM specifies the table you want to query.",
+              ],
+              exampleTitle: "A complete SQL query",
+              exampleCode: `SELECT name, age
+FROM users;`,
+            },
+
+            tryIt: {
+              instructions:
+                "Modify the query and experiment with different columns.",
+              starterCode: `SELECT *
+FROM users;`,
+            },
+
+            exercise: {
+              question:
+                "Write a query that returns the name and age of every user.",
+              starterCode: "",
+            },
+
             completed: true,
           },
         ],
