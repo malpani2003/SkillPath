@@ -12,7 +12,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { courses } from "@/data/courses";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import { SQLQueryResult } from "@/types/sql";
-import { runSQL } from "@/services/sql/runSQL";
 
 type LessonTab = "video" | "learn" | "tryIt" | "exercise";
 
@@ -229,8 +228,6 @@ function TryItTab({
     setResult(null);
 
     try {
-      const queryResult = await runSQL(query);
-      setResult(queryResult);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to execute query.",
