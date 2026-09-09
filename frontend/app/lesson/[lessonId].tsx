@@ -1,10 +1,20 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  ActivityIndicator,
+} from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { courses } from "@/data/courses";
 import VideoPlayer from "@/components/video/VideoPlayer";
+import { SQLQueryResult } from "@/types/sql";
+import { runSQL } from "@/services/sql/runSQL";
 
-type LessonTab = "learn" | "tryIt" | "exercise";
+type LessonTab = "video" | "learn" | "tryIt" | "exercise";
 
 export default function LessonScreen() {
   const router = useRouter();
@@ -13,7 +23,7 @@ export default function LessonScreen() {
     lessonId: string;
   }>();
 
-  const [activeTab, setActiveTab] = useState<LessonTab>("learn");
+  const [activeTab, setActiveTab] = useState<LessonTab>("video");
 
   let selectedLesson = null;
   let selectedModule = null;
@@ -22,7 +32,8 @@ export default function LessonScreen() {
 
   for (const course of courses) {
     for (const module of course.moduleList ?? []) {
-      const index = module.lessonList?.findIndex((lesson) => lesson.id === lessonId) ?? -1;
+      const index =
+        module.lessonList?.findIndex((lesson) => lesson.id === lessonId) ?? -1;
 
       if (index !== -1) {
         selectedLesson = module.lessonList?.[index] ?? null;
@@ -52,8 +63,6 @@ export default function LessonScreen() {
 
   const totalLessons = selectedModule.lessons;
   const currentLesson = lessonIndex + 1;
-
-  const isLastLesson = currentLesson >= totalLessons;
 
   return (
     <View style={styles.container}>
@@ -85,11 +94,14 @@ export default function LessonScreen() {
         {/* Lesson Description */}
         <Text style={styles.description}>{selectedLesson.description}</Text>
 
-        {/* Video */}
-        <VideoPlayer videoUrl={selectedLesson.videoUrl} />
-
         {/* Fixed Tabs */}
         <View style={styles.tabContainer}>
+          <LessonTabButton
+            title="Video"
+            active={activeTab === "video"}
+            onPress={() => setActiveTab("video")}
+          />
+
           <LessonTabButton
             title="Learn"
             active={activeTab === "learn"}
@@ -111,28 +123,16 @@ export default function LessonScreen() {
 
         {/* Tab Content */}
         <View style={styles.tabContent}>
+          {activeTab === "video" && (
+            <VideoPlayer videoUrl={selectedLesson.videoUrl} />
+          )}
+
           {activeTab === "learn" && <LearnTab lesson={selectedLesson} />}
 
           {activeTab === "tryIt" && <TryItTab lesson={selectedLesson} />}
 
           {activeTab === "exercise" && <ExerciseTab lesson={selectedLesson} />}
         </View>
-
-        {/* Next */}
-        <Pressable
-          style={styles.nextButton}
-          onPress={() => {
-            if (!isLastLesson) {
-              console.log("Next lesson");
-            }
-          }}
-        >
-          <Text style={styles.nextButtonText}>
-            {isLastLesson ? "Finish" : "Next"}
-          </Text>
-
-          <Text style={styles.nextButtonArrow}>→</Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
@@ -218,19 +218,113 @@ function TryItTab({
     };
   };
 }) {
+  const [query, setQuery] = useState(lesson.tryIt.starterCode);
+
+  const [result, setResult] = useState<SQLQueryResult | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const handleRunQuery = async () => {
+    setError(null);
+    setResult(null);
+
+    try {
+      const queryResult = await runSQL(query);
+      setResult(queryResult);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to execute query.",
+      );
+    }
+  };
+
   return (
     <View>
       <Text style={styles.contentHeading}>Try It</Text>
 
       <Text style={styles.contentParagraph}>{lesson.tryIt.instructions}</Text>
 
-      <View style={styles.editorPlaceholder}>
-        <Text style={styles.editorText}>{lesson.tryIt.starterCode}</Text>
-      </View>
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        multiline
+        textAlignVertical="top"
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        style={styles.sqlEditor}
+        placeholder="Write your SQL query..."
+        placeholderTextColor="#64748B"
+      />
 
-      <Pressable style={styles.runButton}>
+      <Pressable style={styles.runButton} onPress={handleRunQuery}>
         <Text style={styles.runButtonText}>Run Query</Text>
       </Pressable>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Query Error</Text>
+
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {result && <SQLResultTable result={result} />}
+    </View>
+  );
+}
+
+function SQLResultTable({ result }: { result: SQLQueryResult }) {
+  if (result.columns.length === 0) {
+    return (
+      <View style={styles.resultContainer}>
+        <Text style={styles.resultTitle}>Results</Text>
+
+        <Text style={styles.emptyResultText}>
+          Query executed successfully, but returned no rows.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.resultContainer}>
+      <Text style={styles.resultTitle}>Results</Text>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View>
+          {/* Header */}
+          <View style={styles.tableRow}>
+            {result.columns.map((column) => (
+              <View key={column} style={styles.tableCell}>
+                <Text style={styles.tableHeaderText}>{column}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Rows */}
+          {result.rows.map((row, rowIndex) => (
+            <View
+              key={rowIndex}
+              style={[
+                styles.tableRow,
+                rowIndex % 2 === 1 && styles.alternateTableRow,
+              ]}
+            >
+              {row.map((value, columnIndex) => (
+                <View
+                  key={`${rowIndex}-${columnIndex}`}
+                  style={styles.tableCell}
+                >
+                  <Text style={styles.tableCellText}>
+                    {String(value ?? "NULL")}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -254,12 +348,6 @@ function ExerciseTab({
       <Text style={styles.contentHeading}>Exercise</Text>
 
       <Text style={styles.question}>{lesson.exercise.question}</Text>
-
-      <View style={styles.editorPlaceholder}>
-        <Text style={styles.editorPlaceholderText}>
-          {lesson.exercise.starterCode || "Write your SQL query here..."}
-        </Text>
-      </View>
 
       <Pressable style={styles.checkButton}>
         <Text style={styles.checkButtonText}>Check Answer</Text>
@@ -373,6 +461,7 @@ const styles = StyleSheet.create({
 
   tabContent: {
     paddingTop: 22,
+    paddingBottom: 28,
   },
 
   /* Learn */
@@ -441,20 +530,16 @@ const styles = StyleSheet.create({
     color: "#475569",
     marginBottom: 18,
   },
-
-  editorPlaceholder: {
-    minHeight: 160,
+  sqlEditor: {
+    minHeight: 180,
     backgroundColor: "#0F172A",
     borderRadius: 10,
     padding: 16,
-    justifyContent: "flex-start",
-  },
-
-  editorText: {
+    color: "#E2E8F0",
     fontFamily: "monospace",
     fontSize: 13,
     lineHeight: 21,
-    color: "#E2E8F0",
+    textAlignVertical: "top",
   },
 
   editorPlaceholderText: {
@@ -467,8 +552,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#4338CA",
     borderRadius: 10,
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 13,
     marginTop: 12,
+  },
+
+  runButtonLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  runButtonLoadingText: {
+    marginLeft: 8,
   },
 
   runButtonText: {
@@ -499,32 +595,78 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
-
-  /* Next */
-
-  nextButton: {
-    alignSelf: "flex-end",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#4338CA",
-    minWidth: 150,
-    borderRadius: 11,
-    paddingVertical: 13,
-    paddingHorizontal: 20,
-    marginTop: 28,
+  runButtonDisabled: {
+    opacity: 0.6,
   },
 
-  nextButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+  errorContainer: {
+    marginTop: 16,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    borderRadius: 10,
+    padding: 12,
+  },
+
+  errorTitle: {
+    fontSize: 13,
     fontWeight: "700",
+    color: "#B91C1C",
+    marginBottom: 4,
   },
 
-  nextButtonArrow: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    marginLeft: 10,
+  errorText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#991B1B",
+  },
+
+  resultContainer: {
+    marginTop: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 12,
+  },
+
+  resultTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+
+  alternateTableRow: {
+    backgroundColor: "#F8FAFC",
+  },
+
+  tableCell: {
+    minWidth: 100,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  tableHeaderText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+  },
+
+  tableCellText: {
+    fontSize: 12,
+    color: "#475569",
+  },
+
+  emptyResultText: {
+    fontSize: 12,
+    color: "#64748B",
   },
 
   /* Not Found */

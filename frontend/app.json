@@ -22,7 +22,8 @@
       "expo-image",
       "expo-status-bar",
       "expo-web-browser",
-    "expo-video"
+      "expo-video",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
